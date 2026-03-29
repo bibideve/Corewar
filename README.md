@@ -105,6 +105,12 @@ You can also pass your own `.s` or `.cor` entrants:
 
 The championship script builds the project, assembles source entrants when needed, plays every pairing twice with reversed load order, and prints a standings table based on actual VM winners.
 
+By default, each duel is allowed to run for up to 2 minutes before being marked unresolved. You can override that with `CHAMPIONSHIP_TIMEOUT`, for example:
+
+```bash
+CHAMPIONSHIP_TIMEOUT=30s ./scripts/championship.sh debug/zork.s debug/github.s
+```
+
 ## Notes
 
 - This repository contains sample sources in `debug/` that are useful for manual validation.

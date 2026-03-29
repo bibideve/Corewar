@@ -4,14 +4,14 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK_DIR="$(mktemp -d)"
-MATCH_TIMEOUT="${CHAMPIONSHIP_TIMEOUT:-2s}"
+MATCH_TIMEOUT="${CHAMPIONSHIP_TIMEOUT:-2m}"
 
 declare -a CHAMPION_NAMES=()
 declare -a CHAMPION_FILES=()
 declare -a CHAMPION_POINTS=()
 declare -a CHAMPION_WINS=()
 declare -a CHAMPION_LOSSES=()
-declare -a CHAMPION_DRAWS=()
+declare -a CHAMPION_UNRESOLVED=()
 declare -a CHAMPION_MATCHES=()
 
 cleanup() {
@@ -28,7 +28,8 @@ Runs a round-robin Corewar championship.
 - .s sources are assembled into a temporary .cor file.
 - .cor files are used directly.
 - Every pair is played twice with reversed load order to limit slot bias.
-- Each match is bounded by $CHAMPIONSHIP_TIMEOUT (default: 2s); unresolved matches are scored as draws.
+- Each match is bounded by $CHAMPIONSHIP_TIMEOUT (default: 2m).
+- Timeout or missing-winner matches are reported as unresolved, not as draws.
 EOF
 }
 
@@ -58,7 +59,7 @@ register_champion() {
   CHAMPION_POINTS+=(0)
   CHAMPION_WINS+=(0)
   CHAMPION_LOSSES+=(0)
-  CHAMPION_DRAWS+=(0)
+  CHAMPION_UNRESOLVED+=(0)
   CHAMPION_MATCHES+=(0)
 }
 
@@ -152,11 +153,10 @@ run_match() {
     CHAMPION_POINTS[$second_index]=$((CHAMPION_POINTS[$second_index] + 3))
     printf '%s vs %s -> %s\n' "$first_name" "$second_name" "$second_name"
   elif [[ "$status" -eq 124 || -z "$winner_id" ]]; then
-    CHAMPION_DRAWS[$first_index]=$((CHAMPION_DRAWS[$first_index] + 1))
-    CHAMPION_DRAWS[$second_index]=$((CHAMPION_DRAWS[$second_index] + 1))
-    CHAMPION_POINTS[$first_index]=$((CHAMPION_POINTS[$first_index] + 1))
-    CHAMPION_POINTS[$second_index]=$((CHAMPION_POINTS[$second_index] + 1))
-    printf '%s vs %s -> draw (%s)\n' "$first_name" "$second_name" "$MATCH_TIMEOUT"
+    CHAMPION_UNRESOLVED[$first_index]=$((CHAMPION_UNRESOLVED[$first_index] + 1))
+    CHAMPION_UNRESOLVED[$second_index]=$((CHAMPION_UNRESOLVED[$second_index] + 1))
+    printf '%s vs %s -> unresolved (%s)\n' \
+      "$first_name" "$second_name" "$MATCH_TIMEOUT"
   else
     printf 'Unexpected winner id "%s" for %s vs %s\n' \
       "$winner_id" "$first_name" "$second_name" >&2
@@ -170,14 +170,15 @@ print_standings() {
   local index
 
   printf '\nStandings\n'
-  printf '%-4s %-18s %-7s %-5s %-5s %-5s %-6s\n' \
-    "Rank" "Champion" "Points" "Wins" "Draw" "Loss" "Games"
+  printf '%-4s %-18s %-7s %-5s %-10s %-5s %-6s\n' \
+    "Rank" "Champion" "Points" "Wins" "Unresolved" "Loss" "Games"
 
   for index in "${!CHAMPION_NAMES[@]}"; do
-    lines+=("$(printf '%010d|%010d|%010d|%s|%d|%d|%d' \
+    lines+=("$(printf '%010d|%010d|%010d|%010d|%s|%d|%d|%d' \
       "${CHAMPION_POINTS[$index]}" \
       "${CHAMPION_WINS[$index]}" \
-      "${CHAMPION_DRAWS[$index]}" \
+      "$((999999999 - CHAMPION_UNRESOLVED[$index]))" \
+      "${CHAMPION_UNRESOLVED[$index]}" \
       "${CHAMPION_NAMES[$index]}" \
       "${CHAMPION_LOSSES[$index]}" \
       "${CHAMPION_MATCHES[$index]}" \
@@ -187,8 +188,8 @@ print_standings() {
   printf '%s\n' "${lines[@]}" | sort -r | awk -F'|' '
     {
       rank += 1;
-      printf "%-4d %-18s %-7d %-5d %-5d %-5d %-6d\n",
-        rank, $4, $1 + 0, $2 + 0, $3 + 0, $5 + 0, $6 + 0;
+      printf "%-4d %-18s %-7d %-5d %-10d %-5d %-6d\n",
+        rank, $5, $1 + 0, $2 + 0, $4 + 0, $6 + 0, $7 + 0;
     }
   '
 }
