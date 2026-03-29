@@ -14,17 +14,17 @@
 void	show_dump(t_machine *machine)
 {
   int	i;
+  int	high;
+  int	low;
 
   i = 0;
   while (i < MEM_SIZE)
   {
-    if (machine->mem[i] == 0)
-      my_printf("00 ");
-    else
-    {
-      my_putnbr_base(machine->mem[i], "0123456789ABCDEF");
-      my_printf(" ");
-    }
+    high = machine->mem[i] / 16;
+    low = machine->mem[i] % 16;
+    my_putchar("0123456789ABCDEF"[high]);
+    my_putchar("0123456789ABCDEF"[low]);
+    my_printf(" ");
     if ((i + 1) % 32 == 0)
       my_printf("\n");
     i++;
@@ -62,7 +62,8 @@ int	dump_f(char **av, t_machine *mach)
     mach->dump_cycle = -1;
   else
     mach->dump_cycle = my_atoi(av[ind_nf]);
-  if (mach->dump_cycle == 0 || mach->dump_cycle > CYCLE_TO_DIE)
+  if (mach->dump_cycle != -1
+      && (mach->dump_cycle <= 0 || mach->dump_cycle > CYCLE_TO_DIE))
     return (FAIL);
   return (SUCCESS);
 }

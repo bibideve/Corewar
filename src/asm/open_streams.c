@@ -33,6 +33,10 @@ bool	open_streams(char *inputpath, char *outputpath, t_io *io)
   if (io->input_name == NULL || io->output_name == NULL)
   {
     asm_error(MALLOC_FAIL);
+    free(io->input_name);
+    io->input_name = NULL;
+    free(io->output_name);
+    io->output_name = NULL;
     return (false);
   }
   return (true);
