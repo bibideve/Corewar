@@ -27,7 +27,9 @@ static t_fork	*init_pc(t_fork *f, t_champ *c)
   f->next = NULL;
   f->prev = NULL;
   f->cycle_before_ins = 0;
+  f->pending_opcode = 0;
   f->carry = false;
+  f->live_called = false;
   while (i < REG_NUMBER)
   {
     f->reg[i] = 0;
@@ -62,11 +64,18 @@ t_champ		*fill_champ(const char *file, t_champ *c, t_machine *mach,
   int		rt;
 
   i = 0;
+  rt = 0;
   if ((fd = open(file, O_RDONLY)) == -1)
     *err = -1;
   if (*err != -1)
   {
     c->head = read_header(fd);
+    if (c->head == NULL || c->head->magic != COREWAR_EXEC_MAGIC)
+    {
+      *err = -1;
+      close(fd);
+      return (c);
+    }
     while ((rt = read(fd, buf, 1)) > 0)
     {
       mach->mem[wrap_pos(c->add_start + i)] = buf[0];

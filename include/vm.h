@@ -53,7 +53,9 @@ typedef struct	s_fork
   int		pc;
   int		reg[REG_NUMBER];
   int		cycle_before_ins;
+  unsigned char	pending_opcode;
   bool		carry;
+  bool		live_called;
 }		t_fork;
 
 typedef struct	s_champ
@@ -70,6 +72,7 @@ typedef struct	s_machine
 {
   unsigned char	*mem;
   int		dump_cycle;
+  t_champ		*last_live;
 }		t_machine;
 
 typedef struct	s_opcode
