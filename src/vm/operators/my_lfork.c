@@ -37,7 +37,9 @@ void		my_lfork(t_machine *machine, t_champ *champ, t_fork *f,
   f_m->next = NULL;
   f_m->prev = p;
   f_m->cycle_before_ins = 0;
+  f_m->pending_opcode = 0;
   f_m->carry = f->carry;
+  f_m->live_called = false;
   f_m->id = p->id + 1;
   i = 0;
   while (i < REG_NUMBER)
