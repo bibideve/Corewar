@@ -25,10 +25,12 @@ void	show_dump(t_machine *machine)
       my_putnbr_base(machine->mem[i], "0123456789ABCDEF");
       my_printf(" ");
     }
-    if (i % 32 == 0)
+    if ((i + 1) % 32 == 0)
       my_printf("\n");
     i++;
   }
+  if (MEM_SIZE % 32 != 0)
+    my_printf("\n");
 }
 
 static int	is_dump_flag(char **av)
@@ -38,15 +40,18 @@ static int	is_dump_flag(char **av)
 
   i = 1;
   ind = -1;
-  while (av[i] && ind == -1)
+  while (av[i] != NULL)
   {
     if (my_strcmp("-dump", av[i]) == 0)
-      ind = i;
+    {
+      if (av[i + 1] == NULL || !my_str_isdigit(av[i + 1]))
+	return (FAIL);
+      ind = i + 1;
+      break;
+    }
     i++;
   }
-  i--;
-  return ((i == 1 && av[ind + 1] && my_str_isdigit(av[ind + 1])) ?
-    (ind + 1) : (FAIL));
+  return (ind);
 }
 
 int	dump_f(char **av, t_machine *mach)
@@ -57,7 +62,7 @@ int	dump_f(char **av, t_machine *mach)
     mach->dump_cycle = -1;
   else
     mach->dump_cycle = my_atoi(av[ind_nf]);
-  if (mach->dump_cycle > CYCLE_TO_DIE)
+  if (mach->dump_cycle == 0 || mach->dump_cycle > CYCLE_TO_DIE)
     return (FAIL);
   return (SUCCESS);
 }

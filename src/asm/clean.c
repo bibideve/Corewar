@@ -9,21 +9,66 @@
 */
 
 #include <stdlib.h>
+#include <unistd.h>
 #include "asm.h"
+
+void	free_line_content(t_line_content *line_content)
+{
+  int	i;
+
+  if (line_content == NULL)
+    return ;
+  free(line_content->line);
+  if (line_content->instruction != NULL && line_content->instruction != line_content->label)
+    free(line_content->instruction);
+  free(line_content->label);
+  i = 0;
+  while (line_content->arguments != NULL && i < line_content->nb_args)
+  {
+    free(line_content->arguments[i].arg);
+    i++;
+  }
+  free(line_content->arguments);
+  free(line_content);
+}
+
+void	free_lines(t_list *lines)
+{
+  t_list	*next;
+
+  while (lines != NULL)
+  {
+    next = lines->next;
+    free_line_content(lines->data);
+    free(lines);
+    lines = next;
+  }
+}
 
 void	asm_clean(t_options *options, t_io *io)
 {
   int	i;
 
   i = 0;
-  while (i < NB_FLAGS)
+  while (options != NULL && i < NB_FLAGS)
   {
-    free(options->flags[i]->name);
-    free(options->flags[i]);
+    if (options->flags[i] != NULL)
+    {
+      free(options->flags[i]->name);
+      free(options->flags[i]);
+    }
+    free(options->flags_description[i]);
     i++;
   }
   free(options);
-  free(io->input_name);
-  free(io->output_name);
-  free(io);
+  if (io != NULL)
+  {
+    if (io->input_fd >= 0)
+      close(io->input_fd);
+    if (io->output_fd >= 0)
+      close(io->output_fd);
+    free(io->input_name);
+    free(io->output_name);
+    free(io);
+  }
 }

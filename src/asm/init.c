@@ -113,8 +113,8 @@ bool	init_structs(t_options **options, t_io **io)
   (*io)->line_counter = 0;
   if ((*options = init_options()) == NULL)
   {
-    free(io);
-    asm_error(MALLOC_FAIL);
+    free(*io);
+    *io = NULL;
     return (false);
   }
   return (true);

@@ -8,7 +8,6 @@
 ** Last update Sun Apr  2 19:35:16 2017 Maxime Louet
 */
 
-#include <unistd.h>
 #include "asm.h"
 #include "my.h"
 
@@ -21,7 +20,8 @@ void	write_reg(char *arg, t_io *io, t_options *options)
   final = (char)regnumber;
   if (options->flags[DEBUG]->enabled)
     my_printf("\x1B[33m[DEBUG]\x1B[0m Writing register [%d]\n", final);
-  write(io->output_fd, &final, 1);
+  if (!write_bytes(io->output_fd, &final, 1))
+    options->error_encountered = true;
 }
 
 void	write_direct(char *arg, t_io *io, t_options *options)
@@ -32,10 +32,11 @@ void	write_direct(char *arg, t_io *io, t_options *options)
   if (options->flags[DEBUG]->enabled)
     my_printf("\x1B[33m[DEBUG]\x1B[0m Writing direct [%d]\n", final);
   final = swap_be_i(final);
-  write(io->output_fd, &final, DIR_SIZE);
+  if (!write_bytes(io->output_fd, &final, DIR_SIZE))
+    options->error_encountered = true;
 }
 
-void		write_indirect(char *arg, t_io *io, t_options *options)
+void	write_indirect(char *arg, t_io *io, t_options *options)
 {
   short int	final;
 
@@ -46,5 +47,6 @@ void		write_indirect(char *arg, t_io *io, t_options *options)
   if (options->flags[DEBUG]->enabled)
     my_printf("\x1B[33m[DEBUG]\x1B[0m Writing indirect [%d]\n", final);
   final = swap_be_s(final);
-  write(io->output_fd, &final, IND_SIZE);
+  if (!write_bytes(io->output_fd, &final, IND_SIZE))
+    options->error_encountered = true;
 }

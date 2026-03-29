@@ -130,6 +130,9 @@ bool		parse_args(t_options *options, int ac, char **av);
 bool		open_streams(char *inputpath, char *outputpath, t_io *io);
 bool		assemble(t_options *options, t_io *io);
 bool		init_structs(t_options **options, t_io **io);
+bool		write_bytes(int fd, const void *buf, size_t size);
+void		free_line_content(t_line_content *line_content);
+void		free_lines(t_list *lines);
 
 /*
 ** assemble_dot_instruction.c
@@ -170,11 +173,6 @@ void	asm_clean(t_options *options, t_io *io);
 /*
 ** swap_be.c
 */
-unsigned int	swap_be(unsigned int le);
-
-/*
-** assemble_instruction.c
-*/
 void	check_if_arg_valid(t_options *options, t_io *io,
 			   int arg[2], char *instruction);
 bool	check_arg(t_options *options, t_io *io,
@@ -191,8 +189,6 @@ void	usage(const t_options *options, const char *progname);
 bool	argument_is_index(int instruction_code, int iarg);
 bool	write_final_output(t_list *lines, t_header *header,
 			   t_options *options, t_io *io);
-bool	write_final_output(t_list *lines, t_header *header, t_options *options,
-			   t_io *io);
 /*
 ** write_bytes.c
 */

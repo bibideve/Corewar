@@ -19,7 +19,7 @@
 # define FAIL (-1)
 # define SUCCESS 0
 # define NB_FLAGS 2
-# define NB_OPCODE 15
+# define NB_OPCODE 16
 # define FILE_EXT ".cor"
 
 /*
@@ -53,6 +53,7 @@ typedef struct	s_fork
   int		pc;
   int		reg[REG_NUMBER];
   int		cycle_before_ins;
+  bool		carry;
 }		t_fork;
 
 typedef struct	s_champ
@@ -92,6 +93,13 @@ int		get_indirect(unsigned char *mem, int pos);
 void		put_direct(unsigned char *mem, int pos, int nb);
 void		put_indirect(unsigned char *mem, int pos, short nb);
 int		get_cb_type(char, int);
+int		get_arg_size(unsigned char opcode, int arg_type, int arg_number);
+bool		read_arg_value(t_machine *machine, t_fork *fork, int *reg,
+			       unsigned char opcode, int arg_number, int arg_type,
+			       int pos, bool apply_idx_mod, int *value);
+int		wrap_pos(int pos);
+bool		is_valid_reg(unsigned char reg_value);
+int		reg_index(unsigned char reg_value);
 int		start(t_champ**, t_machine*);
 int		set_pc_dep_opcode(int, unsigned char*, unsigned char);
 void		show_dump(t_machine*);

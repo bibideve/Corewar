@@ -14,11 +14,31 @@
 #include "op.h"
 #include "my.h"
 
+bool	write_bytes(int fd, const void *buf, size_t size)
+{
+  ssize_t	written;
+  size_t	total;
+
+  total = 0;
+  while (total < size)
+  {
+    written = write(fd, (const char *)buf + total, size - total);
+    if (written <= 0)
+      return (false);
+    total += written;
+  }
+  return (true);
+}
+
 bool	write_header(t_header *header, t_options *options, t_io *io)
 {
   if (options->flags[DEBUG]->enabled)
     my_printf("\x1B[33m[DEBUG]\x1B[0m Writing header to file\n");
-  write(io->output_fd, header, sizeof(*header));
+  if (!write_bytes(io->output_fd, header, sizeof(*header)))
+  {
+    asm_error(WRITE_OTHER);
+    return (false);
+  }
   return (true);
 }
 
@@ -34,7 +54,12 @@ bool	write_header_output(t_header *header, t_options *options, t_io *io,
 			    size_t final_size)
 {
   header->prog_size = swap_be_ui(final_size);
-  lseek(io->output_fd, 0, SEEK_SET);
+  if (lseek(io->output_fd, 0, SEEK_SET) < 0)
+  {
+    free(header);
+    asm_error(WRITE_OTHER);
+    return (false);
+  }
   if (!write_header(header, options, io))
     return (false);
   free(header);
