@@ -91,6 +91,20 @@ A small smoke test script is provided:
 
 It builds the project, assembles a couple of sample champions, and runs a basic VM check.
 
+For a full round-robin tournament over the bundled champions:
+
+```bash
+./scripts/championship.sh
+```
+
+You can also pass your own `.s` or `.cor` entrants:
+
+```bash
+./scripts/championship.sh debug/zork.s debug/simple.s debug/github.s
+```
+
+The championship script builds the project, assembles source entrants when needed, plays every pairing twice with reversed load order, and prints a standings table based on actual VM winners.
+
 ## Notes
 
 - This repository contains sample sources in `debug/` that are useful for manual validation.
