@@ -43,4 +43,5 @@ void		live(t_machine *machine, t_champ **champs, t_fork *f)
 	c->head->prog_name);
     c->alive = true;
   }
+  f->carry = false;
 }

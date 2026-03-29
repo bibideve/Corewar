@@ -20,40 +20,34 @@ extern t_opcode	g_opcode[NB_OPCODE];
 static void	set_pc_mem(unsigned char *mem, int *pc)
 {
   int		i;
-  bool		stop;
 
   i = 0;
-  stop = false;
-  while (i < NB_OPCODE && !stop)
+  while (i < NB_OPCODE)
   {
-    if (mem[*pc % MEM_SIZE] == g_opcode[i].id)
+    if (mem[wrap_pos(*pc)] == (unsigned char)g_opcode[i].id)
     {
       if (g_opcode[i].hav_cb == false)
-	*pc = (*pc + 2 + 1) % MEM_SIZE;
+	*pc = wrap_pos(*pc + 3);
       else
-	*pc = (*pc + set_pc_dep_opcode(*pc, mem,
-	      g_opcode[i].id) + 1) % MEM_SIZE;
-      stop = true;
-      while (!is_valid_opcode(mem[*pc % MEM_SIZE]))
-	*pc = (*pc + 1) % MEM_SIZE;
+	*pc = wrap_pos(*pc + set_pc_dep_opcode(*pc, mem, g_opcode[i].id) + 1);
+      return ;
     }
     i++;
   }
+  *pc = wrap_pos(*pc + 1);
 }
 
 int	set_pc(int *pc, unsigned char *mem)
 {
-  while (!is_valid_opcode(mem[*pc % MEM_SIZE]))
-    *pc = (*pc + 1) % MEM_SIZE;
-  if (mem[*pc % MEM_SIZE] == 0x01)
-    *pc = (*pc + 5) % MEM_SIZE;
-  else if (mem[*pc % MEM_SIZE] == 0x0c || mem[*pc % MEM_SIZE] == 0x0f)
-    *pc = (*pc + 3) % MEM_SIZE;
+  while (!is_valid_opcode(mem[wrap_pos(*pc)]))
+    *pc = wrap_pos(*pc + 1);
+  if (mem[wrap_pos(*pc)] == 0x01)
+    *pc = wrap_pos(*pc + 5);
+  else if (mem[wrap_pos(*pc)] == 0x0c || mem[wrap_pos(*pc)] == 0x0f)
+    *pc = wrap_pos(*pc + 3);
   else
     set_pc_mem(mem, pc);
-  while (*pc < 0)
-    *pc += MEM_SIZE;
-  return (*pc);
+  return (wrap_pos(*pc));
 }
 
 int	set_pos(int pc)

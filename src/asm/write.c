@@ -9,7 +9,6 @@
 */
 
 #include <stddef.h>
-#include <unistd.h>
 #include "asm.h"
 #include "my.h"
 
@@ -58,7 +57,7 @@ static void	write_parameters_description(t_line *line, t_options *options,
   if (options->flags[DEBUG]->enabled)
     my_printf("\x1B[33m[DEBUG]\x1B[0m Writing parameters description [%d]\n",
 	dassaut);
-  write(io->output_fd, &dassaut, 1);
+  write_bytes(io->output_fd, &dassaut, 1);
 }
 
 static void	write_parameters(t_line *line, t_io *io, t_options *options)
@@ -92,7 +91,8 @@ static bool	write_line(t_line *line, t_options *options, t_io *io)
   if (options->flags[DEBUG]->enabled)
     my_printf("\x1B[33m[DEBUG]\x1B[0m Writing instruction code [%d]\n",
 	      line->instruction_code);
-  write(io->output_fd, &(line->instruction_code), 1);
+  if (!write_bytes(io->output_fd, &(line->instruction_code), 1))
+    return (false);
   if (has_parameters_description(line->instruction_code))
     write_parameters_description(line, options, io);
   write_parameters(line, io, options);

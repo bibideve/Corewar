@@ -1,6 +1,97 @@
 # Corewar
-Epitech First years Project
 
-2 or more champions is compiled in bytecode by the asm and placed in a virtual machine (The arena)
-The goal of a champion is to erase his opponant's code in the memory by differents instruction, and to be the
-last alive in the arena.
+Corewar is a two-part C project:
+
+- `asm/asm`: an assembler that turns `.s` champion sources into `.cor` bytecode
+- `corewar/corewar`: a virtual machine that loads and executes champion bytecode in the arena
+
+The objective is to run multiple champions in the same memory space and determine which one survives the battle.
+
+## Project layout
+
+```text
+.
+├── asm/                 # Assembler binary output
+├── corewar/             # Virtual machine binary output
+├── debug/               # Sample champions used for manual testing
+├── include/             # Shared headers
+├── libmy/               # Utility library
+└── src/
+    ├── asm/             # Assembler sources
+    └── vm/              # Virtual machine sources
+```
+
+## Build
+
+```bash
+make
+```
+
+This builds:
+
+- `./asm/asm`
+- `./corewar/corewar`
+
+To clean generated files:
+
+```bash
+make clean
+make fclean
+```
+
+## Assembler usage
+
+```bash
+./asm/asm [options] input.s [output.cor]
+```
+
+Examples:
+
+```bash
+./asm/asm debug/simple.s
+./asm/asm debug/zork.s zork.cor
+```
+
+If no output path is provided, the assembler generates `<input_basename>.cor`.
+
+Useful flags:
+
+- `-h`, `--help`: display usage
+- `-debug`: print additional compilation details
+- `-Wall`: enable all warning flags
+- `-Werror`: treat warnings as errors
+
+## Virtual machine usage
+
+```bash
+./corewar/corewar [-dump cycle] [-n id] [-a address] champion1.cor champion2.cor [champion3.cor champion4.cor]
+```
+
+Examples:
+
+```bash
+./corewar/corewar debug/simple.cor debug/simple.cor
+./corewar/corewar -dump 100 debug/zork.cor debug/labels.cor
+```
+
+Rules:
+
+- the VM requires between 2 and 4 champions
+- `-dump` prints the arena state after the requested cycle
+- `-n` sets a champion id
+- `-a` sets a load address
+
+## Quick verification
+
+A small smoke test script is provided:
+
+```bash
+./scripts/smoke_test.sh
+```
+
+It builds the project, assembles a couple of sample champions, and runs a basic VM check.
+
+## Notes
+
+- This repository contains sample sources in `debug/` that are useful for manual validation.
+- The project was originally developed as an educational Corewar implementation and has been cleaned up to improve stability, documentation, and repository hygiene.
