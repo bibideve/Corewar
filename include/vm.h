@@ -12,6 +12,7 @@
 # define VM_H_
 
 # include <stdbool.h>
+# include <stdio.h>
 # include "op.h"
 
 # define ERROR 84
@@ -71,8 +72,12 @@ typedef struct	s_champ
 typedef struct	s_machine
 {
   unsigned char	*mem;
+  unsigned char	*owner;
   int		dump_cycle;
   t_champ		*last_live;
+  FILE		*trace_stream;
+  int		trace_frame_stride;
+  int		trace_frame_count;
 }		t_machine;
 
 typedef struct	s_opcode
@@ -95,6 +100,10 @@ int		get_direct(unsigned char *mem, int pos);
 int		get_indirect(unsigned char *mem, int pos);
 void		put_direct(unsigned char *mem, int pos, int nb);
 void		put_indirect(unsigned char *mem, int pos, short nb);
+void		put_direct_owner(t_machine *machine, int pos, int nb,
+			       unsigned char owner_id);
+void		put_indirect_owner(t_machine *machine, int pos, short nb,
+				 unsigned char owner_id);
 int		get_cb_type(char, int);
 int		get_arg_size(unsigned char opcode, int arg_type, int arg_number);
 bool		read_arg_value(t_machine *machine, t_fork *fork, int *reg,

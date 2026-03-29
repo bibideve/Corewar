@@ -38,6 +38,6 @@ void	st(t_machine *machine, t_champ *champ, t_fork *f, int *reg)
     getind = wrap_pos(f->pos
 		      + (get_indirect(machine->mem, wrap_pos(f->pos + 3))
 			 % IDX_MOD));
-    put_direct(machine->mem, getind, reg[reg_index(src_reg)]);
+    put_direct_owner(machine, getind, reg[reg_index(src_reg)], champ->id);
   }
 }

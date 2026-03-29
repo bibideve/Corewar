@@ -111,6 +111,28 @@ By default, each duel is allowed to run for up to 2 minutes before being marked 
 CHAMPIONSHIP_TIMEOUT=30s ./scripts/championship.sh debug/zork.s debug/github.s
 ```
 
+## Web arena viewer
+
+You can generate a replay trace from a real VM battle and inspect it in a browser:
+
+```bash
+./scripts/generate_replay.sh debug/zork.s debug/simple.s
+./scripts/serve_web_viewer.sh
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8000/
+```
+
+Useful options:
+
+- `COREWAR_TRACE_EVERY=10 ./scripts/generate_replay.sh ...` to sample every 10 cycles instead of every cycle
+- `./scripts/generate_replay.sh /path/to/replay.json debug/zork.s debug/simple.s` to choose the replay output path
+
+The viewer replays real arena snapshots exported by the VM, shows byte ownership by champion color, and overlays active process positions.
+
 ## Notes
 
 - This repository contains sample sources in `debug/` that are useful for manual validation.

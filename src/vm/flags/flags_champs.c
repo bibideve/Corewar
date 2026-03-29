@@ -62,6 +62,7 @@ t_champ		*fill_champ(const char *file, t_champ *c, t_machine *mach,
   char		buf[1];
   int		i;
   int		rt;
+  int		address;
 
   i = 0;
   rt = 0;
@@ -78,7 +79,9 @@ t_champ		*fill_champ(const char *file, t_champ *c, t_machine *mach,
     }
     while ((rt = read(fd, buf, 1)) > 0)
     {
-      mach->mem[wrap_pos(c->add_start + i)] = buf[0];
+      address = wrap_pos(c->add_start + i);
+      mach->mem[address] = buf[0];
+      mach->owner[address] = (unsigned char)c->id;
       i++;
     }
     c->fork = NULL;

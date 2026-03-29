@@ -9,6 +9,7 @@
 */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include "vm.h"
 #include "my.h"
 #include "operators.h"
@@ -34,6 +35,162 @@ t_opcode	g_opcode[NB_OPCODE] =
   {0x10, true, &aff}
 };
 int	g_live_counter = 0;
+
+static int	count_total_forks(t_champ **champs)
+{
+  int		i;
+  int		count;
+  t_fork	*fork;
+
+  i = 0;
+  count = 0;
+  while (champs[i] != NULL)
+  {
+    fork = champs[i]->fork;
+    while (fork != NULL)
+    {
+      count++;
+      fork = fork->next;
+    }
+    i++;
+  }
+  return (count);
+}
+
+static void	write_json_string(FILE *stream, const char *value)
+{
+  const unsigned char	*ptr;
+
+  fputc('"', stream);
+  if (value != NULL)
+  {
+    ptr = (const unsigned char *)value;
+    while (*ptr != '\0')
+    {
+      if (*ptr == '"' || *ptr == '\\')
+      {
+	fputc('\\', stream);
+	fputc(*ptr, stream);
+      }
+      else if (*ptr == '\n')
+	fputs("\\n", stream);
+      else if (*ptr == '\r')
+	fputs("\\r", stream);
+      else if (*ptr == '\t')
+	fputs("\\t", stream);
+      else if (*ptr < 32)
+	fprintf(stream, "\\u%04x", *ptr);
+      else
+	fputc(*ptr, stream);
+      ptr++;
+    }
+  }
+  fputc('"', stream);
+}
+
+static void	write_trace_metadata(FILE *stream, t_champ **champs)
+{
+  int	i;
+
+  fprintf(stream, "{\n");
+  fprintf(stream, "  \"memSize\": %d,\n", MEM_SIZE);
+  fprintf(stream, "  \"rowSize\": 32,\n");
+  fprintf(stream, "  \"champions\": [\n");
+  i = 0;
+  while (champs[i] != NULL)
+  {
+    fprintf(stream, "    {\"id\": %d, \"name\": ",
+	    champs[i]->id);
+    write_json_string(stream, champs[i]->head->prog_name);
+    fprintf(stream, ", \"start\": %d}", champs[i]->add_start);
+    if (champs[i + 1] != NULL)
+      fprintf(stream, ",");
+    fprintf(stream, "\n");
+    i++;
+  }
+  fprintf(stream, "  ],\n");
+  fprintf(stream, "  \"frames\": [\n");
+}
+
+static void	write_trace_hex(FILE *stream, unsigned char *bytes, int size)
+{
+  int	i;
+
+  i = 0;
+  while (i < size)
+  {
+    fprintf(stream, "%02X", bytes[i]);
+    i++;
+  }
+}
+
+static void	write_trace_frame(t_machine *machine, t_champ **champs, int cycle)
+{
+  FILE		*stream;
+  int		i;
+  t_fork	*fork;
+  int		first_fork;
+
+  if (machine->trace_stream == NULL)
+    return ;
+  stream = machine->trace_stream;
+  if (machine->trace_frame_count > 0)
+    fprintf(stream, ",\n");
+  fprintf(stream,
+	  "    {\"cycle\": %d, \"aliveProcesses\": %d, \"memory\": \"",
+	  cycle, count_total_forks(champs));
+  write_trace_hex(stream, machine->mem, MEM_SIZE);
+  fprintf(stream, "\", \"owners\": \"");
+  write_trace_hex(stream, machine->owner, MEM_SIZE);
+  fprintf(stream, "\", \"processes\": [");
+  i = 0;
+  first_fork = 1;
+  while (champs[i] != NULL)
+  {
+    fork = champs[i]->fork;
+    while (fork != NULL)
+    {
+      if (!first_fork)
+	fprintf(stream, ", ");
+      fprintf(stream, "{\"championId\": %d, \"pc\": %d, \"carry\": %s}",
+	      champs[i]->id, wrap_pos(fork->pc),
+	      fork->carry ? "true" : "false");
+      first_fork = 0;
+      fork = fork->next;
+    }
+    i++;
+  }
+  fprintf(stream, "]}");
+  machine->trace_frame_count++;
+}
+
+static int	init_trace_file(t_machine *machine, t_champ **champs)
+{
+  if (machine->trace_stream == NULL)
+    return (SUCCESS);
+  machine->trace_frame_count = 0;
+  write_trace_metadata(machine->trace_stream, champs);
+  return (SUCCESS);
+}
+
+static void	finalize_trace_file(t_machine *machine)
+{
+  if (machine->trace_stream == NULL)
+    return ;
+  fprintf(machine->trace_stream, "\n  ],\n");
+  fprintf(machine->trace_stream, "  \"winner\": ");
+  if (machine->last_live == NULL)
+    fprintf(machine->trace_stream, "null\n");
+  else
+  {
+    fprintf(machine->trace_stream, "{\"id\": %d, \"name\": ",
+	    machine->last_live->id);
+    write_json_string(machine->trace_stream,
+		      machine->last_live->head->prog_name);
+    fprintf(machine->trace_stream, "}\n");
+  }
+  fprintf(machine->trace_stream, "}\n");
+}
 
 bool	is_valid_opcode(unsigned char b)
 {
@@ -230,15 +387,23 @@ int	start(t_champ **champs, t_machine *machine)
   nb_cycle = 0;
   period_cycle = 0;
   machine->last_live = NULL;
+  if (init_trace_file(machine, champs) == FAIL)
+    return (ERROR);
   reset_alive_states(champs);
+  if (machine->trace_stream != NULL)
+    write_trace_frame(machine, champs, nb_cycle);
   while (!win && cycle_to_die > 0)
   {
     run_cycle(champs, machine);
     nb_cycle++;
     period_cycle++;
+    if (machine->trace_stream != NULL
+	&& (nb_cycle % machine->trace_frame_stride) == 0)
+      write_trace_frame(machine, champs, nb_cycle);
     if (machine->dump_cycle > 0 && nb_cycle >= machine->dump_cycle)
     {
       show_dump(machine);
+      finalize_trace_file(machine);
       return (SUCCESS);
     }
     if (period_cycle >= cycle_to_die)
@@ -250,5 +415,10 @@ int	start(t_champ **champs, t_machine *machine)
   if (machine->last_live != NULL)
     my_printf("The player %d(%s) has won.\n", machine->last_live->id,
 	      machine->last_live->head->prog_name);
+  if (machine->trace_stream != NULL
+      && (machine->trace_frame_count == 0
+	  || ((nb_cycle % machine->trace_frame_stride) != 0)))
+    write_trace_frame(machine, champs, nb_cycle);
+  finalize_trace_file(machine);
   return (SUCCESS);
 }

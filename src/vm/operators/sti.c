@@ -23,7 +23,6 @@ void	sti(t_machine *machine, t_champ *champ, t_fork *f, int *reg)
   int		n1;
   int		n2;
 
-  (void)champ;
   n1 = 0;
   n2 = 0;
   f->cycle_before_ins = g_op_tab[10].nbr_cycles;
@@ -45,6 +44,6 @@ void	sti(t_machine *machine, t_champ *champ, t_fork *f, int *reg)
   if (!read_arg_value(machine, f, reg, 0x0b, 3, third_type,
 		      offset, true, &n2))
     return ;
-  put_direct(machine->mem, wrap_pos(f->pos + ((n1 + n2) % IDX_MOD)),
-	     reg[reg_index(src_reg)]);
+  put_direct_owner(machine, wrap_pos(f->pos + ((n1 + n2) % IDX_MOD)),
+		   reg[reg_index(src_reg)], (unsigned char)champ->id);
 }

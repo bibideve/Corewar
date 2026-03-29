@@ -107,6 +107,21 @@ int		get_indirect(unsigned char *mem, int pos)
   return (value);
 }
 
+static void	write_owner(unsigned char *owners, int pos, int size,
+			    unsigned char owner_id)
+{
+  int	i;
+
+  if (owners == NULL)
+    return ;
+  i = 0;
+  while (i < size)
+  {
+    owners[wrap_pos(pos + i)] = owner_id;
+    i++;
+  }
+}
+
 void		put_direct(unsigned char *mem, int pos, int nb)
 {
   unsigned int	value;
@@ -121,6 +136,13 @@ void		put_direct(unsigned char *mem, int pos, int nb)
   }
 }
 
+void		put_direct_owner(t_machine *machine, int pos, int nb,
+			       unsigned char owner_id)
+{
+  put_direct(machine->mem, pos, nb);
+  write_owner(machine->owner, pos, DIR_SIZE, owner_id);
+}
+
 void		put_indirect(unsigned char *mem, int pos, short nb)
 {
   unsigned short	value;
@@ -133,4 +155,11 @@ void		put_indirect(unsigned char *mem, int pos, short nb)
     mem[wrap_pos(pos + i)] = (value >> (8 * (IND_SIZE - 1 - i))) & 0xFF;
     i++;
   }
+}
+
+void		put_indirect_owner(t_machine *machine, int pos, short nb,
+				 unsigned char owner_id)
+{
+  put_indirect(machine->mem, pos, nb);
+  write_owner(machine->owner, pos, IND_SIZE, owner_id);
 }
