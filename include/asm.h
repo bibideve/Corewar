@@ -46,6 +46,7 @@
 # define INVALID_ARGUMENT	4
 # define INVALID_FUNCTION	5
 # define WRONG_ARGUMENT		6
+# define INVALID_REGISTER	7
 
 /*
 ** Option flags
@@ -220,6 +221,7 @@ bool	is_label(const char *instruction);
 bool	is_indirect(const char *instruction);
 bool	is_register(const char *instruction);
 bool	is_direct(const char *instruction);
+bool	is_valid_register_arg(const char *instruction);
 
 /*
 ** assemble_line.c

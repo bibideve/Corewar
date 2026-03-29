@@ -58,7 +58,8 @@ bool		code_error(int errcode, int line, t_options *options)
     "Variable is neither a direct value, an indirect value"
     " or a register",
     "Unknown instruction",
-    "This instruction can't take this type of argument"
+    "This instruction can't take this type of argument",
+    "No such register"
   };
 
   options->error_encountered = true;

@@ -83,6 +83,7 @@ bool	is_direct(const char *instruction)
 bool	is_register(const char *instruction)
 {
   int	i;
+  int	reg_number;
 
   if (instruction == NULL || instruction[0] == '\0' ||
       instruction[1] == '\0')
@@ -96,5 +97,8 @@ bool	is_register(const char *instruction)
       return (false);
     i++;
   }
+  reg_number = my_atoi(&instruction[1]);
+  if (reg_number < 1 || reg_number > REG_NUMBER)
+    return (false);
   return (true);
 }
