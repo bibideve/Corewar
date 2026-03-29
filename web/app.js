@@ -9,6 +9,7 @@ const processValue = document.getElementById("processValue");
 const winnerValue = document.getElementById("winnerValue");
 const legend = document.getElementById("legend");
 const emptyState = document.getElementById("emptyState");
+const replayStatus = document.getElementById("replayStatus");
 const arenaCanvas = document.getElementById("arenaCanvas");
 const context = arenaCanvas.getContext("2d");
 
@@ -30,6 +31,10 @@ let playing = false;
 let animationHandle = null;
 let lastTimestamp = 0;
 let accumulator = 0;
+
+function setReplayStatus(message) {
+  replayStatus.textContent = message;
+}
 
 function updateSpeedLabel() {
   speedValue.textContent = `${speedInput.value} fps`;
@@ -104,6 +109,16 @@ function processPositions(frame) {
   return positions;
 }
 
+function winnerLabelForFrame(frameIndex) {
+  if (!replayData || !replayData.winner) {
+    return "No winner";
+  }
+  if (frameIndex >= replayData.frames.length - 1) {
+    return `${replayData.winner.id}: ${replayData.winner.name}`;
+  }
+  return "Battle in progress";
+}
+
 function renderFrame(frameIndex) {
   const rowSize = replayData.rowSize || 32;
   const bytes = bytesFromHex(replayData.frames[frameIndex].memory);
@@ -130,9 +145,7 @@ function renderFrame(frameIndex) {
 
   cycleValue.textContent = String(replayData.frames[frameIndex].cycle);
   processValue.textContent = String(replayData.frames[frameIndex].aliveProcesses);
-  winnerValue.textContent = replayData.winner
-    ? `${replayData.winner.id}: ${replayData.winner.name}`
-    : "No winner";
+  winnerValue.textContent = winnerLabelForFrame(frameIndex);
   timelineInput.value = String(frameIndex);
 }
 
@@ -181,7 +194,7 @@ function startPlayback() {
   animationHandle = requestAnimationFrame(tick);
 }
 
-function loadReplay(payload) {
+function loadReplay(payload, sourceLabel) {
   replayData = payload;
   emptyState.style.display = "none";
   timelineInput.disabled = false;
@@ -190,6 +203,7 @@ function loadReplay(payload) {
   renderLegend();
   renderFrame(0);
   stopPlayback();
+  setReplayStatus(sourceLabel);
 }
 
 async function loadReplayFromUrl(url) {
@@ -198,7 +212,7 @@ async function loadReplayFromUrl(url) {
   if (!response.ok) {
     throw new Error("Replay fetch failed");
   }
-  loadReplay(await response.json());
+  loadReplay(await response.json(), `Loaded bundled replay: ${url}`);
 }
 
 replayFileInput.addEventListener("change", async (event) => {
@@ -206,7 +220,7 @@ replayFileInput.addEventListener("change", async (event) => {
   if (!file) {
     return;
   }
-  loadReplay(JSON.parse(await file.text()));
+  loadReplay(JSON.parse(await file.text()), `Loaded local replay: ${file.name}`);
 });
 
 playPauseButton.addEventListener("click", () => {
@@ -245,5 +259,7 @@ const params = new URLSearchParams(window.location.search);
 if (params.has("replay")) {
   loadReplayFromUrl(params.get("replay")).catch(() => {});
 } else {
-  loadReplayFromUrl("latest_replay.json").catch(() => {});
+  loadReplayFromUrl("latest_replay.json").catch(() => {
+    setReplayStatus("No bundled replay loaded yet.");
+  });
 }

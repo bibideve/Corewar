@@ -58,6 +58,7 @@ int		process_flag(const char *file, t_champ **c, t_machine *mach,
 {
   static int	i;
   int		err;
+  int		j;
 
   err = 0;
   if ((c[i] = my_calloc(sizeof(t_champ), 1)) == NULL)
@@ -74,6 +75,12 @@ int		process_flag(const char *file, t_champ **c, t_machine *mach,
     c[i]->id = i + 1;
     if (id_already_used(c, i, c[i]->id))
       return (FAIL);
+  }
+  j = 0;
+  while (j < c[i]->head->prog_size)
+  {
+    mach->owner[wrap_pos(c[i]->add_start + j)] = (unsigned char)c[i]->id;
+    j++;
   }
   c[i]->fork->id = 1;
   c[i]->fork->reg[0] = c[i]->id;
