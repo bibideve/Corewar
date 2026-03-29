@@ -25,6 +25,8 @@ int		main(int ac, char **av)
   if (ac < 3)
     return (ERROR);
   machine.mem = my_calloc(sizeof(unsigned char), MEM_SIZE);
+  machine.last_live = NULL;
+  machine.dump_cycle = -1;
   if ((champs = analyse_flags(av, &machine)) == NULL)
     return (ERROR);
   start(champs, &machine);

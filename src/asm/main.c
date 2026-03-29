@@ -56,13 +56,14 @@ static char	*get_output_name(char **av, int pos, int pos_s)
       return (output);
     }
   else
-    return (av[pos]);
+    return (my_strdup(av[pos]));
 }
 
 int		main(int ac, char **av)
 {
   t_options	*options;
   t_io		*io;
+  char		*output_name;
 
   if (!init_structs(&options, &io))
     return (84);
@@ -71,10 +72,12 @@ int		main(int ac, char **av)
     asm_clean(options, io);
     return (84);
   }
+  output_name = get_output_name(av, options->pos_outputfile,
+				options->pos_inputfile);
   if (!open_streams(av[options->pos_inputfile],
-		    get_output_name(av, options->pos_outputfile,
-				    options->pos_inputfile), io))
+		    output_name, io))
   {
+    free(output_name);
     asm_clean(options, io);
     return (84);
   }

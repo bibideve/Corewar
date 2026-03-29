@@ -1,14 +1,13 @@
 /*
 ** flags_champs.c for corewar in src/vm/flags/flags_champs.c
-** 
+**
 ** Made by Bilel Fourati
 ** Login   <bilel.fourati@epitech.eu>
-** 
+**
 ** Started on  Sun Apr  2 20:09:31 2017 Bilel Fourati
 ** Last update Sun Apr  2 20:09:31 2017 Bilel Fourati
 */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -27,7 +26,11 @@ static t_fork	*init_pc(t_fork *f, t_champ *c)
   f->pos = c->add_start;
   f->next = NULL;
   f->prev = NULL;
-  while (i < REG_SIZE)
+  f->cycle_before_ins = 0;
+  f->pending_opcode = 0;
+  f->carry = false;
+  f->live_called = false;
+  while (i < REG_NUMBER)
   {
     f->reg[i] = 0;
     i++;
@@ -61,14 +64,21 @@ t_champ		*fill_champ(const char *file, t_champ *c, t_machine *mach,
   int		rt;
 
   i = 0;
+  rt = 0;
   if ((fd = open(file, O_RDONLY)) == -1)
     *err = -1;
   if (*err != -1)
   {
     c->head = read_header(fd);
+    if (c->head == NULL || c->head->magic != COREWAR_EXEC_MAGIC)
+    {
+      *err = -1;
+      close(fd);
+      return (c);
+    }
     while ((rt = read(fd, buf, 1)) > 0)
     {
-      mach->mem[(c->add_start + i) % MEM_SIZE] = buf[0];
+      mach->mem[wrap_pos(c->add_start + i)] = buf[0];
       i++;
     }
     c->fork = NULL;

@@ -8,8 +8,6 @@
 ** Last update Fri Mar 31 14:10:08 2017 Robin Houssais
 */
 
-#include <stddef.h>
-#include <math.h>
 #include "vm.h"
 #include "op.h"
 #include "operators.h"
@@ -18,18 +16,24 @@ extern t_op	g_op_tab[];
 
 void	lld(t_machine *machine, t_champ *champ, t_fork *f, int *reg)
 {
+  int		arg_type;
+  int		value;
+  int		offset;
+  unsigned char	reg_value;
+
   (void)champ;
   f->cycle_before_ins = g_op_tab[12].nbr_cycles;
-  if (get_cb_type(machine->mem[f->pos + 1], FIRST_ARG) == IND_TYPE)
-  {
-    reg[machine->mem[(f->pos + 4) % MEM_SIZE] - 1] = get_direct(machine->mem,
-	(f->pc + get_indirect(machine->mem, f->pos + 2)));
-  }
-  else if (get_cb_type(machine->mem[f->pos + 1], FIRST_ARG) == DIR_TYPE)
-  {
-    reg[machine->mem[(f->pos + 6) % MEM_SIZE] - 1] = get_direct(machine->mem,
-	((f->pos + 2) % MEM_SIZE));
-  }
-  else
+  arg_type = get_cb_type(machine->mem[wrap_pos(f->pos + 1)], FIRST_ARG);
+  if (arg_type != IND_TYPE && arg_type != DIR_TYPE)
     return ;
+  offset = f->pos + 2;
+  if (!read_arg_value(machine, f, reg, 0x0d, FIRST_ARG, arg_type,
+		      offset, false, &value))
+    return ;
+  offset += get_arg_size(0x0d, arg_type, FIRST_ARG);
+  reg_value = machine->mem[wrap_pos(offset)];
+  if (!is_valid_reg(reg_value))
+    return ;
+  reg[reg_index(reg_value)] = value;
+  f->carry = (value == 0);
 }

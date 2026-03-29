@@ -27,26 +27,37 @@ static t_line_content	*ini_line_content(void)
   return (line_content);
 }
 
+static bool	cleanup_assemble(t_list *lines, t_header *header,
+				 t_line_content *line_content)
+{
+  if (line_content != NULL)
+    free_line_content(line_content);
+  free_lines(lines);
+  free(header);
+  return (false);
+}
+
 static bool	finish_assemble(t_list *lines, t_header *header,
 				t_options *options, t_io *io)
 {
   if (options->error_encountered)
   {
     my_dprintf(2, "Compilation terminated due to errors.\n");
-    return (false);
+    return (cleanup_assemble(lines, header, NULL));
   }
   if (!resolve_check_labels(lines, options))
-    return (false);
-  io->output_fd = open(io->output_name, O_WRONLY | O_CREAT | O_TRUNC, 00666);
+    return (cleanup_assemble(lines, header, NULL));
+  io->output_fd = open(io->output_name, O_WRONLY | O_CREAT | O_TRUNC, 0644);
   if (io->output_fd < 0)
   {
     asm_error(OUTPUTFILE_OTHER);
-    return (false);
+    return (cleanup_assemble(lines, header, NULL));
   }
   if (!write_final_output(lines, header, options, io))
-    return (false);
+    return (cleanup_assemble(lines, header, NULL));
   if (options->flags[LOLI]->enabled)
     display_loli();
+  free_lines(lines);
   return (true);
 }
 
@@ -66,6 +77,8 @@ static t_list	*do_stuff(t_list *lines, t_line_content *line_content)
     line_content->mempos = get_lastpos_size(lines);
   if (line_content->instruction != NULL || line_content->label != NULL)
     lines = add_list(lines, line_content);
+  else
+    free_line_content(line_content);
   return (lines);
 }
 
@@ -82,15 +95,15 @@ bool			assemble(t_options *options, t_io *io)
   while ((current_line = my_gnl(io->input_fd)) != NULL)
   {
     if ((line_content = ini_line_content()) == NULL)
-      return (false);
+      return (cleanup_assemble(lines, header, NULL));
     line_content->line = current_line;
     if (!assemble_line(options, io, header, line_content))
-      return (false);
+      return (cleanup_assemble(lines, header, line_content));
     if (options->error_encountered && options->flags[WFATAL_ERRORS]->enabled)
     {
       my_dprintf(2, "Compilation terminated due to %s.\n",
 	  options->flags[WFATAL_ERRORS]->name);
-      return (false);
+      return (cleanup_assemble(lines, header, line_content));
     }
     lines = do_stuff(lines, line_content);
   }

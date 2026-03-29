@@ -1,0 +1,9 @@
+*.o
+*.a
+*.cor
+core
+core.*
+
+/asm/
+/corewar/
+

@@ -12,6 +12,20 @@
 #include "asm.h"
 #include "my.h"
 
+static void	free_label_list(t_list *labels)
+{
+  t_list	*tmp;
+
+  while (labels != NULL)
+  {
+    tmp = labels->next;
+    free(((t_label *)(labels->data))->name);
+    free(labels->data);
+    free(labels);
+    labels = tmp;
+  }
+}
+
 static bool	resolve_label(t_list *labels, char *name, size_t *resolvedpos)
 {
   while (labels != NULL)
@@ -91,22 +105,15 @@ static bool	resolve_labels(t_list *labels, t_list *lines,
 bool		resolve_check_labels(t_list *lines, t_options *options)
 {
   t_list	*labels;
-  t_list	*tmp;
 
   labels = NULL;
   if (!store_labels(&labels, lines, options))
     return (false);
   if (!resolve_labels(labels, lines, options))
-    return (false);
-  tmp = labels;
-  while (labels != NULL && tmp != NULL)
   {
-    tmp = labels->next;
-    free(((t_label *)(labels->data))->name);
-    free(labels->data);
-    free(labels);
-    labels = tmp;
+    free_label_list(labels);
+    return (false);
   }
-  free(labels);
+  free_label_list(labels);
   return (true);
 }

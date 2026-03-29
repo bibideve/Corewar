@@ -11,16 +11,17 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include "asm.h"
 #include "my.h"
 
 bool	open_streams(char *inputpath, char *outputpath, t_io *io)
 {
   if (outputpath == NULL)
-    {
-      asm_error(MALLOC_FAIL);
-      return (false);
-    }
+  {
+    asm_error(MALLOC_FAIL);
+    return (false);
+  }
   io->input_fd = open(inputpath, O_RDONLY);
   if (io->input_fd < 0)
   {
@@ -29,5 +30,14 @@ bool	open_streams(char *inputpath, char *outputpath, t_io *io)
   }
   io->input_name = my_strdup(inputpath);
   io->output_name = my_strdup(outputpath);
+  if (io->input_name == NULL || io->output_name == NULL)
+  {
+    asm_error(MALLOC_FAIL);
+    free(io->input_name);
+    io->input_name = NULL;
+    free(io->output_name);
+    io->output_name = NULL;
+    return (false);
+  }
   return (true);
 }

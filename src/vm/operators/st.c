@@ -8,7 +8,6 @@
 ** Last update Fri Mar 31 14:34:34 2017 Bilel Fourati
 */
 
-#include <stdio.h>
 #include "operators.h"
 #include "vm.h"
 
@@ -16,21 +15,29 @@ extern t_op	g_op_tab[];
 
 void	st(t_machine *machine, t_champ *champ, t_fork *f, int *reg)
 {
-  int	getind;
+  int		getind;
+  int		arg_type;
+  unsigned char	src_reg;
+  unsigned char	dst_reg;
 
   (void)champ;
   f->cycle_before_ins = g_op_tab[2].nbr_cycles;
-  if (get_cb_type(machine->mem[(f->pos + 1) % MEM_SIZE],
-		  SECOND_ARG) == REG_TYPE)
-    reg[machine->mem[(f->pos + 3) % MEM_SIZE] - 1]
-      = reg[machine->mem[(f->pos + 2) % MEM_SIZE] - 1];
-  else
+  src_reg = machine->mem[wrap_pos(f->pos + 2)];
+  if (!is_valid_reg(src_reg))
+    return ;
+  arg_type = get_cb_type(machine->mem[wrap_pos(f->pos + 1)], SECOND_ARG);
+  if (arg_type == REG_TYPE)
   {
-    getind = (f->pos + get_indirect(machine->mem, (f->pos + 3) % MEM_SIZE));
-    while (getind < 0)
-      getind = (getind + MEM_SIZE) % MEM_SIZE;
-    put_direct(machine->mem, getind,
-	reg[machine->mem[(f->pos + 2) % MEM_SIZE] - 1]);
-//    printf("%s effectue le ST de %d a %d\n", champ->head->prog_name, reg[machine->mem[(f->pos + 2) % MEM_SIZE] - 1], getind);
+    dst_reg = machine->mem[wrap_pos(f->pos + 3)];
+    if (!is_valid_reg(dst_reg))
+      return ;
+    reg[reg_index(dst_reg)] = reg[reg_index(src_reg)];
+  }
+  else if (arg_type == IND_TYPE)
+  {
+    getind = wrap_pos(f->pos
+		      + (get_indirect(machine->mem, wrap_pos(f->pos + 3))
+			 % IDX_MOD));
+    put_direct(machine->mem, getind, reg[reg_index(src_reg)]);
   }
 }
