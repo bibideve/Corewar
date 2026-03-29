@@ -20,6 +20,7 @@ void	my_xor(t_machine *machine, t_champ *champ, t_fork *f, int *reg)
   unsigned char	src2;
 
   (void)machine;
+  (void)champ;
   f->cycle_before_ins = g_op_tab[7].nbr_cycles;
   src1 = machine->mem[wrap_pos(f->pos + 2)];
   src2 = machine->mem[wrap_pos(f->pos + 3)];
@@ -27,6 +28,5 @@ void	my_xor(t_machine *machine, t_champ *champ, t_fork *f, int *reg)
   if (!is_valid_reg(src1) || !is_valid_reg(src2) || !is_valid_reg(dst))
     return ;
   reg[reg_index(dst)] = reg[reg_index(src1)] ^ reg[reg_index(src2)];
-  (void)champ;
   f->carry = (reg[reg_index(dst)] == 0);
 }

@@ -81,7 +81,6 @@ int		main(int ac, char **av)
     asm_clean(options, io);
     return (84);
   }
-  free(output_name);
   if (!assemble(options, io))
   {
     asm_clean(options, io);

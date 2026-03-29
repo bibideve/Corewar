@@ -25,6 +25,6 @@ void	display_loli(void)
   while ((line = my_gnl(fd)) != NULL)
     {
       my_putstr(line);
-      write(1, "\n", 1);
+      my_putchar('\n');
     }
 }
