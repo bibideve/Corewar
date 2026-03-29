@@ -10,49 +10,40 @@
 
 #include "operators.h"
 #include "vm.h"
-#include "my.h"
 
 extern t_op	g_op_tab[];
 
-static int	verif_type_sti(int t, int *n1, t_machine *machine, t_fork *f)
-{
-  int		to_f;
-
-  to_f = 0;
-  if (t == REG_TYPE)
-  {
-    *n1 = f->reg[machine->mem[(f->pos + 3) % MEM_SIZE] - 1];
-    to_f = REG_SIZE + 3;
-  }
-  else if (t == DIR_TYPE || t == IND_TYPE)
-  {
-    *n1 = get_indirect(machine->mem, (f->pos + 3) % MEM_SIZE);
-    to_f = IND_SIZE + 3;
-  }
-  return (to_f);
-}
-
 void	sti(t_machine *machine, t_champ *champ, t_fork *f, int *reg)
 {
-  int	n1;
-  int	n2;
-  int	t;
-  int	to_f;
+  unsigned char	src_reg;
+  unsigned char	cb;
+  int		second_type;
+  int		third_type;
+  int		offset;
+  int		n1;
+  int		n2;
 
-  to_f = 0;
   n1 = 0;
   n2 = 0;
-  (void)champ;
   f->cycle_before_ins = g_op_tab[10].nbr_cycles;
-  t = get_cb_type(machine->mem[(f->pos + 1) % MEM_SIZE], SECOND_ARG);
-  to_f += verif_type_sti(t, &n1, machine, f);
-  t = get_cb_type(machine->mem[(f->pos + 1) % MEM_SIZE], THIRD_ARG);
-  n2 = (t == DIR_TYPE || t == IND_TYPE) ?
-       (get_indirect(machine->mem, (f->pos + to_f) % MEM_SIZE)) :
-	(reg[machine->mem[(f->pos + to_f) % MEM_SIZE] - 1]);
-  to_f = (f->pos + (n1 + n2) % IDX_MOD) % MEM_SIZE;
-  while (to_f < 0)
-    to_f = (to_f + MEM_SIZE) % MEM_SIZE;
-  put_direct(machine->mem, to_f,
-      reg[machine->mem[(f->pos + 2) % MEM_SIZE] - 1]);
+  cb = machine->mem[wrap_pos(f->pos + 1)];
+  src_reg = machine->mem[wrap_pos(f->pos + 2)];
+  if (!is_valid_reg(src_reg))
+    return ;
+  second_type = get_cb_type(cb, SECOND_ARG);
+  third_type = get_cb_type(cb, THIRD_ARG);
+  if ((second_type != REG_TYPE && second_type != DIR_TYPE
+       && second_type != IND_TYPE)
+      || (third_type != REG_TYPE && third_type != DIR_TYPE))
+    return ;
+  offset = f->pos + 3;
+  if (!read_arg_value(machine, f, reg, 0x0b, 2, second_type,
+		      offset, true, &n1))
+    return ;
+  offset += get_arg_size(0x0b, second_type, 2);
+  if (!read_arg_value(machine, f, reg, 0x0b, 3, third_type,
+		      offset, true, &n2))
+    return ;
+  put_direct_owner(machine, wrap_pos(f->pos + ((n1 + n2) % IDX_MOD)),
+		   reg[reg_index(src_reg)], (unsigned char)champ->id);
 }

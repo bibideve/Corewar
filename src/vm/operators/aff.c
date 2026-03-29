@@ -17,9 +17,13 @@ extern t_op	g_op_tab[];
 void	aff(t_machine *machine, t_champ *champ, t_fork *f, int *reg)
 {
   unsigned char	n;
+  unsigned char	reg_value;
 
   (void)champ;
   f->cycle_before_ins = g_op_tab[15].nbr_cycles;
-  n = reg[machine->mem[(f->pos + 2) % MEM_SIZE] - 1] % 256;
-  write(1, &n, 1);
+  reg_value = machine->mem[wrap_pos(f->pos + 2)];
+  if (!is_valid_reg(reg_value))
+    return ;
+  n = reg[reg_index(reg_value)] % 256;
+  (void)!write(1, &n, 1);
 }

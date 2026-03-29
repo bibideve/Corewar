@@ -22,6 +22,8 @@ CFLAGS	+= -Wall -Wextra -O3
 #CFLAGS	+= -fstack-protector-strong -Wstack-protector
 
 CPPFLAGS	+= -Iinclude/
+DEPFLAGS	= -MMD -MP
+CPPFLAGS	+= $(DEPFLAGS)
 
 SRCDIRCOR	= ./src/vm/
 SRCCOR	= flags/dump.c \
@@ -89,6 +91,8 @@ SRCASM	:= $(addprefix $(SRCDIRASM), $(SRCASM))
 
 OBJCOR	= $(SRCCOR:.c=.o)
 OBJASM	= $(SRCASM:.c=.o)
+DEPCOR	= $(OBJCOR:.o=.d)
+DEPASM	= $(OBJASM:.o=.d)
 
 LDFLAGS	+= -Llibmy/ -lmy
 
@@ -121,6 +125,8 @@ $(NAMEASM): $(LIB) $(OBJASM)
 clean:
 	$(RM) $(OBJCOR)
 	$(RM) $(OBJASM)
+	$(RM) $(DEPCOR)
+	$(RM) $(DEPASM)
 	$(MAKE) -C $(LIBDIR) clean
 
 fclean: clean
@@ -131,3 +137,5 @@ fclean: clean
 re:	fclean all
 
 .PHONY:	all clean fclean re
+
+-include $(DEPCOR) $(DEPASM)

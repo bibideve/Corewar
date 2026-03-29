@@ -33,8 +33,6 @@ void		live(t_machine *machine, t_champ **champs, t_fork *f)
 {
   t_champ	*c;
 
-  (void)machine;
-  (void)champs;
   f->cycle_before_ins = g_op_tab[0].nbr_cycles;
   g_live_counter++;
   if ((c = exist_id(champs, get_direct(machine->mem, f->pos + 1))))
@@ -42,5 +40,8 @@ void		live(t_machine *machine, t_champ **champs, t_fork *f)
     my_printf("The player %d(%s) is alive.\n", c->id,
 	c->head->prog_name);
     c->alive = true;
+    machine->last_live = c;
   }
+  f->live_called = true;
+  f->carry = false;
 }

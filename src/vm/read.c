@@ -12,13 +12,33 @@
 #include <unistd.h>
 #include "vm.h"
 
+static bool	read_bytes(int fd, void *buffer, size_t size)
+{
+  ssize_t	read_size;
+  size_t	total;
+
+  total = 0;
+  while (total < size)
+  {
+    read_size = read(fd, (char *)buffer + total, size - total);
+    if (read_size <= 0)
+      return (false);
+    total += read_size;
+  }
+  return (true);
+}
+
 t_header	*read_header(int fd)
 {
   t_header	*h;
 
   if ((h = malloc(sizeof(t_header))) == NULL)
     return (NULL);
-  read(fd, h, sizeof(t_header));
+  if (!read_bytes(fd, h, sizeof(t_header)))
+  {
+    free(h);
+    return (NULL);
+  }
   h->magic = swap_be(h->magic);
   h->prog_size = swap_be(h->prog_size);
   return (h);
@@ -26,32 +46,32 @@ t_header	*read_header(int fd)
 
 char	*read_string(int fd, int length)
 {
-  int	rt;
   char	*buf;
 
   if ((buf = malloc(length)) == NULL)
     return (NULL);
-  if ((rt = read(fd, buf, length)) == -1 || rt == 0)
+  if (!read_bytes(fd, buf, length))
+  {
+    free(buf);
     return (NULL);
+  }
   return (buf);
 }
 
 int	read_int(int fd)
 {
-  int	rt;
   int	mag;
 
-  if ((rt = read(fd, &mag, sizeof(int))) == -1 || rt == 0)
+  if (!read_bytes(fd, &mag, sizeof(int)))
     return (FAIL);
   return (mag);
 }
 
 char	read_char(int fd)
 {
-  int	rt;
   char	mag;
 
-  if ((rt = read(fd, &mag, sizeof(char))) == -1 || rt == 0)
+  if (!read_bytes(fd, &mag, sizeof(char)))
     return (FAIL);
   return (mag);
 }
